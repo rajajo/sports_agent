@@ -3,7 +3,7 @@ import json
 import os
 import threading
 from datetime import datetime
-from flask import Flask, render_template, redirect, url_for, jsonify
+from flask import Flask, render_template, redirect, url_for, jsonify, request
 
 OUTPUT_FILE = os.getenv("OUTPUT_FILE", "output.json")
 EXPENSE_FILE = os.getenv("EXPENSE_FILE", "expenses.json")
@@ -12,6 +12,7 @@ app = Flask(__name__)
 
 _agent_running = False
 _agent_error = None
+_current_range_label = "Last 2 days"
 
 
 def _load_json(path: str) -> dict:
@@ -21,10 +22,12 @@ def _load_json(path: str) -> dict:
         return json.load(f)
 
 
-def _run_agent_background():
+def _run_agent_background(after_date: str, before_date: str):
     global _agent_running, _agent_error
     _agent_error = None
     try:
+        from tools_gmail import set_date_range
+        set_date_range(after_date, before_date)
         from daily_assistant import main
         asyncio.run(main())
     except Exception as e:
@@ -73,16 +76,24 @@ def index():
         currency_symbol=currency_symbol,
         agent_running=_agent_running,
         agent_error=_agent_error,
+        current_range_label=_current_range_label,
     )
 
 
 @app.route("/run", methods=["POST"])
 def run_report():
-    global _agent_running, _agent_error
+    global _agent_running, _agent_error, _current_range_label
     if not _agent_running:
         _agent_error = None
         _agent_running = True
-        thread = threading.Thread(target=_run_agent_background, daemon=True)
+        after_date = request.form.get("after_date")
+        before_date = request.form.get("before_date")
+        _current_range_label = request.form.get("range_label", "Custom")
+        thread = threading.Thread(
+            target=_run_agent_background,
+            args=(after_date, before_date),
+            daemon=True,
+        )
         thread.start()
     return redirect(url_for("index"))
 

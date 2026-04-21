@@ -1,6 +1,5 @@
 import os
 import base64
-import json
 from html.parser import HTMLParser
 
 from google.oauth2.credentials import Credentials
@@ -11,6 +10,16 @@ SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
 
 CREDENTIALS_FILE = os.getenv("GOOGLE_CREDENTIALS_FILE", "credentials.json")
 TOKEN_FILE = os.getenv("GOOGLE_TOKEN_FILE", "token.json")
+
+# Set by ui.py before each agent run
+_after_date = None   # "YYYY-MM-DD"
+_before_date = None  # "YYYY-MM-DD"
+
+
+def set_date_range(after_date: str = None, before_date: str = None) -> None:
+    global _after_date, _before_date
+    _after_date = after_date
+    _before_date = before_date
 
 
 class _HTMLStripper(HTMLParser):
@@ -46,7 +55,6 @@ def _get_service():
 
 
 def _decode_body(payload: dict) -> str:
-    """Recursively extract plain text or HTML body from a Gmail message payload."""
     mime = payload.get("mimeType", "")
     body_data = payload.get("body", {}).get("data", "")
 
@@ -67,16 +75,21 @@ def _decode_body(payload: dict) -> str:
 
 def fetch_expense_emails(max_results: int = 30) -> list:
     """
-    Search Gmail for recent receipt/invoice emails (past 2 days).
+    Search Gmail for receipt/invoice emails within the configured date range.
     Returns a list of dicts: {id, subject, sender, date, snippet, body_text}.
     The agent decides which ones are real expenses.
     """
     service = _get_service()
 
-    query = (
-        'subject:(receipt OR invoice OR "order confirmation" OR payment OR "your order")'
-        " newer_than:2d"
-    )
+    base = 'subject:(receipt OR invoice OR "order confirmation" OR payment OR "your order")'
+
+    if _after_date and _before_date:
+        # Gmail date format: YYYY/MM/DD
+        after = _after_date.replace("-", "/")
+        before = _before_date.replace("-", "/")
+        query = f"{base} after:{after} before:{before}"
+    else:
+        query = f"{base} newer_than:2d"
 
     result = (
         service.users()
@@ -106,7 +119,7 @@ def fetch_expense_emails(max_results: int = 30) -> list:
                 "sender": headers.get("From", ""),
                 "date": headers.get("Date", ""),
                 "snippet": msg.get("snippet", ""),
-                "body_text": body_text[:2000],  # cap to avoid token bloat
+                "body_text": body_text[:2000],
             }
         )
 

@@ -7,7 +7,6 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", sans-serif;
       background: #0f1117;
@@ -17,158 +16,155 @@
 
     /* ── Nav ── */
     nav {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 32px;
-      height: 60px;
-      background: #161922;
-      border-bottom: 1px solid #ffffff0f;
-      position: sticky;
-      top: 0;
-      z-index: 10;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 32px; height: 60px;
+      background: #161922; border-bottom: 1px solid #ffffff0f;
+      position: sticky; top: 0; z-index: 100;
     }
     .nav-brand { display: flex; align-items: center; gap: 10px; }
-    .nav-brand svg { opacity: .85; }
     .nav-brand span { font-size: 1rem; font-weight: 600; letter-spacing: -.01em; }
-    .nav-right { display: flex; align-items: center; gap: 12px; }
+    .nav-right { display: flex; align-items: center; gap: 10px; }
     .ts { font-size: 0.78rem; color: #6b7280; }
 
     /* ── Buttons ── */
     .btn {
       display: inline-flex; align-items: center; gap: 6px;
-      padding: 8px 18px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      font-size: 0.83rem;
-      font-weight: 500;
+      padding: 8px 16px; border-radius: 8px; border: none;
+      cursor: pointer; font-size: 0.83rem; font-weight: 500;
       transition: background .15s, opacity .15s;
     }
     .btn-primary { background: #5b7cf6; color: #fff; }
     .btn-primary:hover { background: #4a6ae8; }
-    .btn-primary:disabled { opacity: .45; cursor: not-allowed; }
-    .btn-ghost { background: #ffffff12; color: #c9d0e0; border: 1px solid #ffffff15; font-size: 0.75rem; padding: 5px 12px; }
-    .btn-ghost:hover { background: #ffffff1f; }
+    .btn-primary:disabled { opacity: .4; cursor: not-allowed; }
+    .btn-ghost { background: #ffffff0f; color: #c9d0e0; border: 1px solid #ffffff15; font-size: 0.78rem; padding: 6px 12px; }
+    .btn-ghost:hover { background: #ffffff1a; }
+    .btn-sm { padding: 5px 11px; font-size: 0.75rem; border-radius: 6px; }
 
     /* ── Spinner ── */
     .spinner {
-      width: 13px; height: 13px;
-      border: 2px solid #ffffff55;
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin .65s linear infinite;
-      flex-shrink: 0;
+      width: 13px; height: 13px; flex-shrink: 0;
+      border: 2px solid #ffffff44; border-top-color: #fff;
+      border-radius: 50%; animation: spin .65s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* ── Time picker ── */
+    .picker-wrap { position: relative; }
+    .picker-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #1e2535; border: 1px solid #ffffff18;
+      color: #c9d0e0; padding: 7px 13px; border-radius: 8px;
+      cursor: pointer; font-size: 0.8rem; font-weight: 500;
+      white-space: nowrap;
+    }
+    .picker-btn:hover { background: #252e42; }
+    .picker-caret { font-size: 0.6rem; opacity: .6; transition: transform .2s; }
+    .picker-btn.open .picker-caret { transform: rotate(180deg); }
+
+    .picker-panel {
+      display: none; position: absolute; right: 0; top: calc(100% + 8px);
+      background: #1a1f2e; border: 1px solid #ffffff14;
+      border-radius: 12px; box-shadow: 0 16px 40px #00000066;
+      width: 460px; z-index: 200; overflow: hidden;
+    }
+    .picker-panel.open { display: flex; }
+    .picker-left {
+      width: 170px; flex-shrink: 0;
+      border-right: 1px solid #ffffff0a;
+      padding: 12px 0;
+    }
+    .preset {
+      display: block; width: 100%;
+      padding: 8px 18px; background: none; border: none;
+      color: #9ca3b0; font-size: 0.82rem; text-align: left;
+      cursor: pointer; transition: background .12s, color .12s;
+    }
+    .preset:hover { background: #ffffff08; color: #e8eaf0; }
+    .preset.active { color: #5b7cf6; background: #5b7cf610; font-weight: 500; }
+
+    .picker-right { flex: 1; padding: 18px 20px; }
+    .picker-right h4 { font-size: 0.7rem; text-transform: uppercase; letter-spacing: .08em; color: #4b5563; margin-bottom: 14px; }
+    .date-inputs { display: flex; flex-direction: column; gap: 10px; }
+    .date-row { display: flex; align-items: center; gap: 10px; }
+    .date-row label { font-size: 0.75rem; color: #6b7280; width: 32px; flex-shrink: 0; }
+    .date-row input[type=date] {
+      flex: 1; background: #0f1117; border: 1px solid #ffffff14;
+      border-radius: 6px; color: #e8eaf0; padding: 6px 10px;
+      font-size: 0.8rem; outline: none;
+    }
+    .date-row input[type=date]:focus { border-color: #5b7cf6; }
+    .picker-actions { display: flex; justify-content: flex-end; margin-top: 16px; }
+
     /* ── Banners ── */
     .banner {
-      max-width: 1100px;
-      margin: 20px auto 0;
-      padding: 12px 20px;
-      border-radius: 10px;
-      font-size: 0.86rem;
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
+      max-width: 1100px; margin: 20px auto 0;
+      padding: 12px 20px; border-radius: 10px; font-size: 0.86rem;
+      display: flex; align-items: flex-start; gap: 10px;
     }
     .banner-info { background: #1e2a4a; border: 1px solid #3b5bdb44; color: #93b4ff; }
     .banner-error { background: #2a1a1a; border: 1px solid #e53e3e44; color: #fc8181; }
     .banner-error strong { display: block; margin-bottom: 3px; color: #feb2b2; }
     .banner code { font-size: 0.78rem; opacity: .8; word-break: break-all; }
 
-    /* ── Main layout ── */
-    main { max-width: 1100px; margin: 0 auto; padding: 28px 24px 48px; }
+    /* ── Main ── */
+    main { max-width: 1100px; margin: 0 auto; padding: 28px 24px 60px; }
 
-    /* ── Stat pills ── */
+    /* ── Stats ── */
     .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 22px; }
     .stat {
-      background: #161922;
-      border: 1px solid #ffffff0f;
-      border-radius: 12px;
-      padding: 18px 22px;
+      background: #161922; border: 1px solid #ffffff0f;
+      border-radius: 12px; padding: 18px 22px;
     }
-    .stat-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: .07em; color: #6b7280; margin-bottom: 8px; }
+    .stat-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: .07em; color: #6b7280; margin-bottom: 8px; }
     .stat-value { font-size: 1.65rem; font-weight: 700; letter-spacing: -.02em; color: #e8eaf0; }
     .stat-sub { font-size: 0.75rem; color: #6b7280; margin-top: 4px; }
 
     /* ── Grid ── */
     .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     .card-wide { grid-column: 1 / -1; }
-    @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } .stats { grid-template-columns: 1fr; } }
+    @media (max-width: 700px) { .grid, .stats { grid-template-columns: 1fr; } }
 
     /* ── Cards ── */
     .card {
-      background: #161922;
-      border: 1px solid #ffffff0f;
-      border-radius: 14px;
-      padding: 22px 24px;
+      background: #161922; border: 1px solid #ffffff0f;
+      border-radius: 14px; padding: 22px 24px;
     }
-    .card-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 18px;
-    }
-    .card-title {
-      font-size: 0.72rem;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      color: #6b7280;
-      font-weight: 600;
-    }
+    .card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+    .card-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: .08em; color: #6b7280; font-weight: 600; }
 
     /* ── Table ── */
     table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
     thead th {
-      text-align: left;
-      color: #4b5563;
-      font-weight: 500;
-      font-size: 0.72rem;
-      text-transform: uppercase;
-      letter-spacing: .06em;
-      padding: 0 12px 10px 0;
-      border-bottom: 1px solid #ffffff0a;
+      text-align: left; color: #4b5563; font-weight: 500;
+      font-size: 0.7rem; text-transform: uppercase; letter-spacing: .06em;
+      padding: 0 12px 10px 0; border-bottom: 1px solid #ffffff0a;
     }
     thead th:last-child { text-align: right; }
     tbody td { padding: 10px 12px 10px 0; border-bottom: 1px solid #ffffff07; color: #c9d0e0; vertical-align: middle; }
     tbody td:last-child { text-align: right; }
     tbody tr:last-child td { border-bottom: none; }
     tbody tr:hover td { background: #ffffff04; }
-    tfoot td { padding-top: 12px; font-weight: 600; color: #e8eaf0; border-top: 1px solid #ffffff14; font-size: 0.9rem; }
+    tfoot td { padding-top: 12px; font-weight: 600; color: #e8eaf0; border-top: 1px solid #ffffff14; }
     tfoot td:last-child { text-align: right; }
 
     /* ── Bar chart ── */
     .bar-row { display: flex; align-items: center; gap: 10px; }
     .bar-track { flex: 1; height: 6px; background: #ffffff0d; border-radius: 3px; overflow: hidden; }
     .bar-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #5b7cf6, #7b9cff); }
-    .bar-amt { font-size: 0.82rem; color: #9ca3b0; white-space: nowrap; min-width: 80px; text-align: right; }
+    .bar-amt { font-size: 0.82rem; color: #9ca3b0; white-space: nowrap; min-width: 90px; text-align: right; }
 
-    /* ── Category tag ── */
+    /* ── Tag ── */
     .tag {
-      display: inline-block;
-      padding: 3px 9px;
-      border-radius: 99px;
-      font-size: 0.7rem;
-      font-weight: 500;
-      background: #1e2a4a;
-      color: #93b4ff;
-      border: 1px solid #3b5bdb33;
+      display: inline-block; padding: 3px 9px; border-radius: 99px;
+      font-size: 0.7rem; font-weight: 500;
+      background: #1e2a4a; color: #93b4ff; border: 1px solid #3b5bdb33;
     }
 
     /* ── Summary ── */
-    .summary-text {
-      white-space: pre-wrap;
-      font-size: 0.875rem;
-      line-height: 1.75;
-      color: #9ca3b0;
-    }
+    .summary-text { white-space: pre-wrap; font-size: 0.875rem; line-height: 1.75; color: #9ca3b0; }
 
     /* ── Pie ── */
-    #pie-wrap { display: none; max-width: 220px; margin: 0 auto; }
-    #bar-wrap { width: 100%; }
-
+    #pie-wrap { display: none; max-width: 260px; margin: 0 auto; padding-top: 8px; }
     .empty { color: #4b5563; font-size: 0.875rem; padding: 8px 0; }
   </style>
 </head>
@@ -176,14 +172,56 @@
 
 <nav>
   <div class="nav-brand">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5b7cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5b7cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
     </svg>
     <span>Expense Report</span>
   </div>
+
   <div class="nav-right">
     {% if generated_at %}<span class="ts">Updated {{ generated_at }}</span>{% endif %}
-    <form method="POST" action="/run">
+
+    <!-- Time range picker -->
+    <div class="picker-wrap" id="picker-wrap">
+      <button class="picker-btn" id="picker-btn" onclick="togglePicker()" type="button">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span id="picker-label">{{ current_range_label }}</span>
+        <span class="picker-caret">▼</span>
+      </button>
+
+      <div class="picker-panel" id="picker-panel">
+        <div class="picker-left">
+          <button class="preset" data-days="0" onclick="selectPreset(this, 'Today')">Today</button>
+          <button class="preset" data-days="2" onclick="selectPreset(this, 'Last 2 days')">Last 2 days</button>
+          <button class="preset" data-days="7" onclick="selectPreset(this, 'Last 7 days')">Last 7 days</button>
+          <button class="preset active" data-days="10" onclick="selectPreset(this, 'Last 10 days')">Last 10 days</button>
+          <button class="preset" data-days="30" onclick="selectPreset(this, 'Last 30 days')">Last 30 days</button>
+          <button class="preset" data-days="month" onclick="selectPreset(this, 'This month')">This month</button>
+        </div>
+        <div class="picker-right">
+          <h4>Custom range</h4>
+          <div class="date-inputs">
+            <div class="date-row">
+              <label>From</label>
+              <input type="date" id="custom-from">
+            </div>
+            <div class="date-row">
+              <label>To</label>
+              <input type="date" id="custom-to">
+            </div>
+          </div>
+          <div class="picker-actions">
+            <button class="btn btn-primary btn-sm" onclick="applyCustom()">Apply</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hidden form for Run Report -->
+    <form method="POST" action="/run" id="run-form">
+      <input type="hidden" name="after_date" id="f-after">
+      <input type="hidden" name="before_date" id="f-before">
+      <input type="hidden" name="range_label" id="f-label" value="{{ current_range_label }}">
       <button type="submit" class="btn btn-primary" id="run-btn" {% if agent_running %}disabled{% endif %}>
         {% if agent_running %}<span class="spinner"></span>Running…{% else %}Run Report{% endif %}
       </button>
@@ -202,14 +240,11 @@
 
 {% if agent_error %}
 <div class="banner banner-error" id="error-banner">
-  <div>
-    <strong>Agent run failed</strong>
-    <code>{{ agent_error }}</code>
-  </div>
+  <div><strong>Agent run failed</strong><code>{{ agent_error }}</code></div>
 </div>
 {% endif %}
 
-<!-- Stat pills -->
+<!-- Stats -->
 {% if all_entries %}
 {% set top_cat = monthly_totals | dictsort(by='value') | last %}
 <div class="stats">
@@ -237,19 +272,17 @@
   <div class="card">
     <div class="card-head">
       <span class="card-title">By Category</span>
-      {% if monthly_totals %}<button class="btn btn-ghost" onclick="toggleChart(this)">Pie chart</button>{% endif %}
+      {% if monthly_totals %}<button class="btn btn-ghost btn-sm" onclick="toggleChart(this)">Pie chart</button>{% endif %}
     </div>
-
     {% if monthly_totals %}
       {% set max_val = monthly_totals.values() | max %}
-
       <div id="bar-wrap">
         <table>
           <tbody>
             {% for cat, amt in monthly_totals | dictsort(by='value') | reverse %}
             {% if amt > 0 %}
             <tr>
-              <td style="width:90px; color:#9ca3b0">{{ cat }}</td>
+              <td style="width:100px; color:#9ca3b0; font-size:0.83rem">{{ cat }}</td>
               <td>
                 <div class="bar-row">
                   <div class="bar-track"><div class="bar-fill" style="width:{{ (amt / max_val * 100) | int }}%"></div></div>
@@ -260,12 +293,9 @@
             {% endif %}
             {% endfor %}
           </tbody>
-          <tfoot>
-            <tr><td>Total</td><td>{{ currency_symbol }}{{ "{:,.0f}".format(grand_total) }}</td></tr>
-          </tfoot>
+          <tfoot><tr><td>Total</td><td>{{ currency_symbol }}{{ "{:,.0f}".format(grand_total) }}</td></tr></tfoot>
         </table>
       </div>
-
       <div id="pie-wrap"><canvas id="pie-chart"></canvas></div>
     {% else %}
       <p class="empty">No expenses recorded yet.</p>
@@ -284,13 +314,7 @@
     {% if all_entries %}
     <table>
       <thead>
-        <tr>
-          <th>Date</th>
-          <th>Vendor</th>
-          <th>Description</th>
-          <th>Category</th>
-          <th>Amount</th>
-        </tr>
+        <tr><th>Date</th><th>Vendor</th><th>Description</th><th>Category</th><th>Amount</th></tr>
       </thead>
       <tbody>
         {% for e in all_entries %}
@@ -313,20 +337,19 @@
 </main>
 
 <script>
-  // Pass data safely as JSON — avoids Jinja loop rendering bugs
-  var totals = {{ monthly_totals | tojson }};
-  var currencySymbol = {{ currency_symbol | tojson }};
-  var labels = Object.keys(totals).filter(k => totals[k] > 0);
-  var values = labels.map(k => totals[k]);
+  var totals       = {{ monthly_totals | tojson }};
+  var currSym      = {{ currency_symbol | tojson }};
+  var labels       = Object.keys(totals).filter(k => totals[k] > 0);
+  var values       = labels.map(k => totals[k]);
+  var COLORS       = ['#5b7cf6','#f97316','#22d3ee','#a78bfa','#f59e0b','#34d399','#f43f5e','#64748b'];
+  var pieChart     = null;
+  var pieVisible   = false;
 
-  var pieChart = null;
-  var pieVisible = false;
-  var COLORS = ['#5b7cf6','#f97316','#22d3ee','#a78bfa','#f59e0b','#34d399','#f43f5e','#64748b'];
-
+  // ── Pie chart ──
   function toggleChart(btn) {
     pieVisible = !pieVisible;
     document.getElementById('bar-wrap').style.display = pieVisible ? 'none' : '';
-    document.getElementById('pie-wrap').style.display = pieVisible ? 'block' : 'none';
+    document.getElementById('pie-wrap').style.display  = pieVisible ? 'block' : 'none';
     btn.textContent = pieVisible ? 'Bar chart' : 'Pie chart';
 
     if (pieVisible && !pieChart) {
@@ -334,21 +357,37 @@
         type: 'pie',
         data: {
           labels: labels,
-          datasets: [{
-            data: values,
-            backgroundColor: COLORS.slice(0, labels.length),
-            borderWidth: 0,
-          }]
+          datasets: [{ data: values, backgroundColor: COLORS.slice(0, labels.length), borderWidth: 0 }]
         },
         options: {
           plugins: {
             legend: {
               position: 'bottom',
-              labels: { color: '#9ca3b0', font: { size: 11 }, padding: 12, boxWidth: 10 }
+              labels: {
+                color: '#9ca3b0',
+                font: { size: 11 },
+                padding: 10,
+                boxWidth: 10,
+                // Show category + amount in legend
+                generateLabels: function(chart) {
+                  return labels.map(function(label, i) {
+                    return {
+                      text: label + '  ' + currSym + values[i].toLocaleString('en-IN', {maximumFractionDigits: 0}),
+                      fillStyle: COLORS[i],
+                      strokeStyle: COLORS[i],
+                      lineWidth: 0,
+                      index: i
+                    };
+                  });
+                }
+              }
             },
             tooltip: {
               callbacks: {
-                label: ctx => ' ' + currencySymbol + ctx.parsed.toLocaleString('en-IN', {minimumFractionDigits: 0})
+                label: function(ctx) {
+                  var pct = ((ctx.parsed / values.reduce((a,b)=>a+b,0))*100).toFixed(1);
+                  return '  ' + currSym + ctx.parsed.toLocaleString('en-IN', {maximumFractionDigits: 0}) + '  (' + pct + '%)';
+                }
               }
             }
           }
@@ -357,25 +396,93 @@
     }
   }
 
-  // Poll while agent is running
+  // ── Date picker ──
+  function pad(n) { return String(n).padStart(2,'0'); }
+  function fmtDate(d) { return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+
+  function setRange(after, before, label) {
+    document.getElementById('f-after').value  = after;
+    document.getElementById('f-before').value = before;
+    document.getElementById('f-label').value  = label;
+    document.getElementById('picker-label').textContent = label;
+    // Update custom inputs to reflect selection
+    document.getElementById('custom-from').value = after;
+    document.getElementById('custom-to').value   = before;
+  }
+
+  function selectPreset(btn, label) {
+    document.querySelectorAll('.preset').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    var today = new Date();
+    var before = fmtDate(today);
+    var after;
+    if (btn.dataset.days === 'month') {
+      after = today.getFullYear() + '-' + pad(today.getMonth()+1) + '-01';
+    } else if (btn.dataset.days === '0') {
+      after = before;
+    } else {
+      var d = new Date(today);
+      d.setDate(d.getDate() - parseInt(btn.dataset.days));
+      after = fmtDate(d);
+    }
+    setRange(after, before, label);
+  }
+
+  function applyCustom() {
+    var after  = document.getElementById('custom-from').value;
+    var before = document.getElementById('custom-to').value;
+    if (!after || !before) return;
+    document.querySelectorAll('.preset').forEach(b => b.classList.remove('active'));
+    setRange(after, before, after + ' → ' + before);
+    closePicker();
+  }
+
+  function togglePicker() {
+    var panel = document.getElementById('picker-panel');
+    var btn   = document.getElementById('picker-btn');
+    var open  = panel.classList.toggle('open');
+    btn.classList.toggle('open', open);
+  }
+
+  function closePicker() {
+    document.getElementById('picker-panel').classList.remove('open');
+    document.getElementById('picker-btn').classList.remove('open');
+  }
+
+  // Close picker when clicking outside
+  document.addEventListener('click', function(e) {
+    if (!document.getElementById('picker-wrap').contains(e.target)) closePicker();
+  });
+
+  // Init: set default range (Last 10 days) on page load
+  (function() {
+    var today = new Date();
+    var d = new Date(today); d.setDate(d.getDate() - 10);
+    setRange(fmtDate(d), fmtDate(today), '{{ current_range_label }}');
+    // Mark matching preset active
+    document.querySelectorAll('.preset').forEach(function(b) {
+      if (b.textContent.trim() === '{{ current_range_label }}') b.classList.add('active');
+    });
+  })();
+
+  // ── Agent status poll ──
   {% if agent_running %}
   (function poll() {
     setTimeout(function() {
-      fetch('/status').then(r => r.json()).then(data => {
+      fetch('/status').then(r => r.json()).then(function(data) {
         if (!data.running) {
           if (data.error) {
             var b = document.getElementById('error-banner');
             if (!b) {
               b = document.createElement('div');
-              b.id = 'error-banner';
-              b.className = 'banner banner-error';
+              b.id = 'error-banner'; b.className = 'banner banner-error';
               document.querySelector('main').prepend(b);
             }
             b.innerHTML = '<div><strong>Agent run failed</strong><code>' + data.error + '</code></div>';
-            document.getElementById('run-btn').disabled = false;
-            document.getElementById('run-btn').innerHTML = 'Run Report';
-            var rb = document.querySelector('.banner-info');
-            if (rb) rb.remove();
+            var rb = document.getElementById('run-btn');
+            rb.disabled = false; rb.innerHTML = 'Run Report';
+            var info = document.querySelector('.banner-info');
+            if (info) info.remove();
           } else {
             window.location.reload();
           }
