@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Daily Expense Report</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -34,6 +35,13 @@
     .btn-primary { background: #4f8ef7; color: #fff; }
     .btn-primary:hover { background: #3a78e0; }
     .btn-primary:disabled { background: #a0bef7; cursor: not-allowed; }
+    .btn-ghost {
+      background: #f0f0f0;
+      color: #555;
+      padding: 5px 10px;
+      font-size: 0.78rem;
+    }
+    .btn-ghost:hover { background: #e4e4e4; }
     .spinner {
       display: inline-block;
       width: 14px; height: 14px;
@@ -84,7 +92,8 @@
       box-shadow: 0 1px 4px rgba(0,0,0,.08);
     }
     .card.wide { grid-column: 1 / -1; }
-    .card h2 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: .06em; color: #888; margin-bottom: 14px; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .card h2 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: .06em; color: #888; }
     table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
     th { text-align: left; color: #888; font-weight: 500; padding: 4px 8px 8px 0; border-bottom: 1px solid #eee; }
     td { padding: 7px 8px 7px 0; border-bottom: 1px solid #f0f0f0; }
@@ -109,6 +118,8 @@
       font-weight: 500;
     }
     .empty { color: #aaa; font-size: 0.9rem; padding: 12px 0; }
+    #pie-wrap { display: none; max-width: 240px; margin: 0 auto; }
+    #bar-wrap table { width: 100%; }
   </style>
 </head>
 <body>
@@ -147,35 +158,46 @@
 
 <div class="grid">
 
-  <!-- Monthly totals bar chart -->
+  <!-- Monthly totals -->
   <div class="card">
-    <h2>{{ month }} — by category</h2>
+    <div class="card-header">
+      <h2>{{ month }} — by category</h2>
+      {% if monthly_totals %}
+        <button class="btn btn-ghost" id="chart-toggle" onclick="toggleChart()">Pie chart</button>
+      {% endif %}
+    </div>
+
     {% if monthly_totals %}
-      {% set max_val = monthly_totals.values() | max %}
-      <table>
-        <thead>
-          <tr><th>Category</th><th>Spend</th></tr>
-        </thead>
-        <tbody>
-          {% for cat, amt in monthly_totals.items() %}
-          {% if amt > 0 %}
-          <tr>
-            <td>{{ cat }}</td>
-            <td>
-              <div class="bar-wrap">
-                <div class="bar" style="width: {{ [(amt / max_val * 120) | int, 2] | max }}px"></div>
-                <span class="amt">${{ "%.2f" | format(amt) }}</span>
-              </div>
-            </td>
-          </tr>
-          {% endif %}
-          {% endfor %}
-          <tr class="total">
-            <td>Total</td>
-            <td>${{ "%.2f" | format(grand_total) }}</td>
-          </tr>
-        </tbody>
-      </table>
+      <!-- Bar view -->
+      <div id="bar-wrap">
+        {% set max_val = monthly_totals.values() | max %}
+        <table>
+          <thead><tr><th>Category</th><th>Spend</th></tr></thead>
+          <tbody>
+            {% for cat, amt in monthly_totals.items() %}
+            {% if amt > 0 %}
+            <tr>
+              <td>{{ cat }}</td>
+              <td>
+                <div class="bar-wrap">
+                  <div class="bar" style="width: {{ [(amt / max_val * 120) | int, 2] | max }}px"></div>
+                  <span class="amt">{{ currency_symbol }}{{ "%.2f" | format(amt) }}</span>
+                </div>
+              </td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+            <tr class="total">
+              <td>Total</td>
+              <td>{{ currency_symbol }}{{ "%.2f" | format(grand_total) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- Pie view -->
+      <div id="pie-wrap">
+        <canvas id="pie-chart"></canvas>
+      </div>
     {% else %}
       <p class="empty">No expenses recorded yet.</p>
     {% endif %}
@@ -221,6 +243,46 @@
 </div>
 
 <script>
+  // Pie / bar toggle
+  var pieVisible = false;
+  var pieChart = null;
+  var chartData = {
+    labels: [{% for cat, amt in monthly_totals.items() %}{% if amt > 0 %}"{{ cat }}",{% endif %}{% endfor %}],
+    values: [{% for cat, amt in monthly_totals.items() %}{% if amt > 0 %}{{ amt }},{% endif %}{% endfor %}]
+  };
+
+  function toggleChart() {
+    pieVisible = !pieVisible;
+    document.getElementById('bar-wrap').style.display = pieVisible ? 'none' : '';
+    document.getElementById('pie-wrap').style.display = pieVisible ? 'block' : 'none';
+    document.getElementById('chart-toggle').textContent = pieVisible ? 'Bar chart' : 'Pie chart';
+    if (pieVisible && !pieChart) {
+      pieChart = new Chart(document.getElementById('pie-chart'), {
+        type: 'pie',
+        data: {
+          labels: chartData.labels,
+          datasets: [{
+            data: chartData.values,
+            backgroundColor: ['#4f8ef7','#f7914f','#4fc3f7','#a78ef7','#f7d44f','#7ef794'],
+          }]
+        },
+        options: {
+          plugins: {
+            legend: { position: 'bottom', labels: { font: { size: 12 } } },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  return ' {{ currency_symbol }}' + ctx.parsed.toFixed(2);
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+  }
+
+  // Poll /status every 3s while agent is running
   {% if agent_running %}
   (function poll() {
     setTimeout(function() {
@@ -229,7 +291,6 @@
         .then(data => {
           if (!data.running) {
             if (data.error) {
-              // Show error without losing the existing data on the page
               var banner = document.getElementById('error-banner');
               if (!banner) {
                 banner = document.createElement('div');

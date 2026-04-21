@@ -56,6 +56,12 @@ def index():
 
     all_entries = sorted(all_entries, key=lambda e: e.get("date", ""), reverse=True)
 
+    # Detect dominant currency from entries
+    _symbols = {"USD": "$", "INR": "₹", "EUR": "€", "GBP": "£"}
+    currencies = [e.get("currency", "USD") for e in all_entries]
+    dominant_currency = max(set(currencies), key=currencies.count) if currencies else "USD"
+    currency_symbol = _symbols.get(dominant_currency, dominant_currency + " ")
+
     return render_template(
         "index.html",
         generated_at=generated_at,
@@ -64,6 +70,7 @@ def index():
         month=month,
         all_entries=all_entries,
         grand_total=grand_total,
+        currency_symbol=currency_symbol,
         agent_running=_agent_running,
         agent_error=_agent_error,
     )
