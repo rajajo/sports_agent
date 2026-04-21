@@ -1,12 +1,17 @@
+import asyncio
 import json
 import os
+import threading
 from datetime import datetime
-from flask import Flask, render_template
+from flask import Flask, render_template, redirect, url_for, jsonify
 
 OUTPUT_FILE = os.getenv("OUTPUT_FILE", "output.json")
 EXPENSE_FILE = os.getenv("EXPENSE_FILE", "expenses.json")
 
 app = Flask(__name__)
+
+# Track whether the agent is currently running
+_agent_running = False
 
 
 def _load_json(path: str) -> dict:
@@ -14,6 +19,17 @@ def _load_json(path: str) -> dict:
         return {}
     with open(path) as f:
         return json.load(f)
+
+
+def _run_agent_background():
+    global _agent_running
+    try:
+        from daily_assistant import main
+        asyncio.run(main())
+    except Exception as e:
+        print(f"Agent run failed: {e}")
+    finally:
+        _agent_running = False
 
 
 @app.route("/")
@@ -29,14 +45,13 @@ def index():
         except ValueError:
             pass
 
-    summary = output.get("summary", "No data yet. Run daily_assistant.py first.")
+    summary = output.get("summary", "No data yet. Click 'Run Report' to start.")
 
     monthly_totals = expenses.get("monthly_totals", {})
     month = expenses.get("month", "")
     all_entries = expenses.get("expenses", [])
     grand_total = round(sum(monthly_totals.values()), 2)
 
-    # Most recent entries first
     all_entries = sorted(all_entries, key=lambda e: e.get("date", ""), reverse=True)
 
     return render_template(
@@ -47,7 +62,24 @@ def index():
         month=month,
         all_entries=all_entries,
         grand_total=grand_total,
+        agent_running=_agent_running,
     )
+
+
+@app.route("/run", methods=["POST"])
+def run_report():
+    global _agent_running
+    if not _agent_running:
+        _agent_running = True
+        thread = threading.Thread(target=_run_agent_background, daemon=True)
+        thread.start()
+    return redirect(url_for("index"))
+
+
+@app.route("/status")
+def status():
+    """Polled by the UI to know when the agent finishes."""
+    return jsonify({"running": _agent_running})
 
 
 if __name__ == "__main__":

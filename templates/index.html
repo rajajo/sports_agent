@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="refresh" content="60">
   <title>Daily Expense Report</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -18,10 +17,46 @@
       margin: 0 auto 24px;
       display: flex;
       justify-content: space-between;
-      align-items: baseline;
+      align-items: center;
+      gap: 16px;
     }
     header h1 { font-size: 1.4rem; font-weight: 600; }
+    .header-right { display: flex; align-items: center; gap: 12px; }
     .ts { font-size: 0.8rem; color: #888; }
+    .btn {
+      padding: 8px 16px;
+      border-radius: 7px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    .btn-primary { background: #4f8ef7; color: #fff; }
+    .btn-primary:hover { background: #3a78e0; }
+    .btn-primary:disabled { background: #a0bef7; cursor: not-allowed; }
+    .spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid #fff;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .running-banner {
+      max-width: 900px;
+      margin: 0 auto 16px;
+      background: #eef3ff;
+      color: #4f8ef7;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 0.88rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
     .grid {
       max-width: 900px;
       margin: 0 auto;
@@ -68,10 +103,28 @@
 
 <header>
   <h1>Expense Report</h1>
-  {% if generated_at %}
-    <span class="ts">Last updated: {{ generated_at }}</span>
-  {% endif %}
+  <div class="header-right">
+    {% if generated_at %}
+      <span class="ts">Last updated: {{ generated_at }}</span>
+    {% endif %}
+    <form method="POST" action="/run" id="run-form">
+      <button type="submit" class="btn btn-primary" id="run-btn" {% if agent_running %}disabled{% endif %}>
+        {% if agent_running %}
+          <span class="spinner"></span>Running…
+        {% else %}
+          Run Report
+        {% endif %}
+      </button>
+    </form>
+  </div>
 </header>
+
+{% if agent_running %}
+<div class="running-banner">
+  <span class="spinner" style="border-color:#4f8ef7; border-top-color:transparent;"></span>
+  Agent is reading your Gmail and categorizing expenses. Page will refresh when done.
+</div>
+{% endif %}
 
 <div class="grid">
 
@@ -147,5 +200,26 @@
   </div>
 
 </div>
+
+<script>
+  // Poll /status every 3s while agent is running; reload when it finishes
+  {% if agent_running %}
+  (function poll() {
+    setTimeout(function() {
+      fetch('/status')
+        .then(r => r.json())
+        .then(data => {
+          if (!data.running) {
+            window.location.reload();
+          } else {
+            poll();
+          }
+        })
+        .catch(poll);
+    }, 3000);
+  })();
+  {% endif %}
+</script>
+
 </body>
 </html>
