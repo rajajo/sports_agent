@@ -105,6 +105,8 @@
     .banner-error { background: #2a1a1a; border: 1px solid #e53e3e44; color: #fc8181; }
     .banner-error strong { display: block; margin-bottom: 3px; color: #feb2b2; }
     .banner code { font-size: 0.78rem; opacity: .8; word-break: break-all; }
+    .banner-close { margin-left: auto; background: none; border: none; color: inherit; cursor: pointer; font-size: 1.1rem; opacity: .6; padding: 0 0 0 12px; line-height: 1; }
+    .banner-close:hover { opacity: 1; }
 
     /* ── Main ── */
     main { max-width: 1100px; margin: 0 auto; padding: 28px 24px 60px; }
@@ -241,6 +243,7 @@
 {% if agent_error %}
 <div class="banner banner-error" id="error-banner">
   <div><strong>Agent run failed</strong><code>{{ agent_error }}</code></div>
+  <button class="banner-close" onclick="document.getElementById('error-banner').remove()">✕</button>
 </div>
 {% endif %}
 
@@ -478,7 +481,7 @@
               b.id = 'error-banner'; b.className = 'banner banner-error';
               document.querySelector('main').prepend(b);
             }
-            b.innerHTML = '<div><strong>Agent run failed</strong><code>' + data.error + '</code></div>';
+            b.innerHTML = '<div><strong>Agent run failed</strong><code>' + data.error + '</code></div><button class="banner-close" onclick="this.parentElement.remove()">✕</button>';
             var rb = document.getElementById('run-btn');
             rb.disabled = false; rb.innerHTML = 'Run Report';
             var info = document.querySelector('.banner-info');
