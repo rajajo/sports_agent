@@ -47,7 +47,7 @@ def index():
         except ValueError:
             pass
 
-    summary = output.get("summary", "No data yet. Click 'Run Report' to start.")
+    summary = output.get("summary") or "No data yet. Click 'Run Report' to start."
 
     monthly_totals = expenses.get("monthly_totals", {})
     month = expenses.get("month", "")

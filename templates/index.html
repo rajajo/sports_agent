@@ -3,277 +3,352 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Daily Expense Report</title>
+  <title>Expense Report</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #f5f5f5;
-      color: #222;
-      padding: 24px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", sans-serif;
+      background: #0f1117;
+      color: #e8eaf0;
+      min-height: 100vh;
     }
-    header {
-      max-width: 900px;
-      margin: 0 auto 24px;
+
+    /* ── Nav ── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      height: 60px;
+      background: #161922;
+      border-bottom: 1px solid #ffffff0f;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .nav-brand { display: flex; align-items: center; gap: 10px; }
+    .nav-brand svg { opacity: .85; }
+    .nav-brand span { font-size: 1rem; font-weight: 600; letter-spacing: -.01em; }
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+    .ts { font-size: 0.78rem; color: #6b7280; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 18px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.83rem;
+      font-weight: 500;
+      transition: background .15s, opacity .15s;
+    }
+    .btn-primary { background: #5b7cf6; color: #fff; }
+    .btn-primary:hover { background: #4a6ae8; }
+    .btn-primary:disabled { opacity: .45; cursor: not-allowed; }
+    .btn-ghost { background: #ffffff12; color: #c9d0e0; border: 1px solid #ffffff15; font-size: 0.75rem; padding: 5px 12px; }
+    .btn-ghost:hover { background: #ffffff1f; }
+
+    /* ── Spinner ── */
+    .spinner {
+      width: 13px; height: 13px;
+      border: 2px solid #ffffff55;
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .65s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Banners ── */
+    .banner {
+      max-width: 1100px;
+      margin: 20px auto 0;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 0.86rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .banner-info { background: #1e2a4a; border: 1px solid #3b5bdb44; color: #93b4ff; }
+    .banner-error { background: #2a1a1a; border: 1px solid #e53e3e44; color: #fc8181; }
+    .banner-error strong { display: block; margin-bottom: 3px; color: #feb2b2; }
+    .banner code { font-size: 0.78rem; opacity: .8; word-break: break-all; }
+
+    /* ── Main layout ── */
+    main { max-width: 1100px; margin: 0 auto; padding: 28px 24px 48px; }
+
+    /* ── Stat pills ── */
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 22px; }
+    .stat {
+      background: #161922;
+      border: 1px solid #ffffff0f;
+      border-radius: 12px;
+      padding: 18px 22px;
+    }
+    .stat-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: .07em; color: #6b7280; margin-bottom: 8px; }
+    .stat-value { font-size: 1.65rem; font-weight: 700; letter-spacing: -.02em; color: #e8eaf0; }
+    .stat-sub { font-size: 0.75rem; color: #6b7280; margin-top: 4px; }
+
+    /* ── Grid ── */
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .card-wide { grid-column: 1 / -1; }
+    @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } .stats { grid-template-columns: 1fr; } }
+
+    /* ── Cards ── */
+    .card {
+      background: #161922;
+      border: 1px solid #ffffff0f;
+      border-radius: 14px;
+      padding: 22px 24px;
+    }
+    .card-head {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 16px;
+      margin-bottom: 18px;
     }
-    header h1 { font-size: 1.4rem; font-weight: 600; }
-    .header-right { display: flex; align-items: center; gap: 12px; }
-    .ts { font-size: 0.8rem; color: #888; }
-    .btn {
-      padding: 8px 16px;
-      border-radius: 7px;
-      border: none;
-      cursor: pointer;
-      font-size: 0.85rem;
+    .card-title {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #6b7280;
+      font-weight: 600;
+    }
+
+    /* ── Table ── */
+    table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    thead th {
+      text-align: left;
+      color: #4b5563;
       font-weight: 500;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      padding: 0 12px 10px 0;
+      border-bottom: 1px solid #ffffff0a;
     }
-    .btn-primary { background: #4f8ef7; color: #fff; }
-    .btn-primary:hover { background: #3a78e0; }
-    .btn-primary:disabled { background: #a0bef7; cursor: not-allowed; }
-    .btn-ghost {
-      background: #f0f0f0;
-      color: #555;
-      padding: 5px 10px;
-      font-size: 0.78rem;
-    }
-    .btn-ghost:hover { background: #e4e4e4; }
-    .spinner {
-      display: inline-block;
-      width: 14px; height: 14px;
-      border: 2px solid #fff;
-      border-top-color: transparent;
-      border-radius: 50%;
-      animation: spin .7s linear infinite;
-      vertical-align: middle;
-      margin-right: 6px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .running-banner {
-      max-width: 900px;
-      margin: 0 auto 16px;
-      background: #eef3ff;
-      color: #4f8ef7;
-      border-radius: 8px;
-      padding: 10px 16px;
-      font-size: 0.88rem;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .error-banner {
-      max-width: 900px;
-      margin: 0 auto 16px;
-      background: #fff0f0;
-      color: #c0392b;
-      border-radius: 8px;
-      padding: 12px 16px;
-      font-size: 0.88rem;
-      line-height: 1.5;
-    }
-    .error-banner strong { display: block; margin-bottom: 4px; }
-    .error-detail { font-family: monospace; font-size: 0.8rem; word-break: break-word; opacity: .85; }
-    .grid {
-      max-width: 900px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-    @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
-    .card {
-      background: #fff;
-      border-radius: 10px;
-      padding: 20px;
-      box-shadow: 0 1px 4px rgba(0,0,0,.08);
-    }
-    .card.wide { grid-column: 1 / -1; }
-    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-    .card h2 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: .06em; color: #888; }
-    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-    th { text-align: left; color: #888; font-weight: 500; padding: 4px 8px 8px 0; border-bottom: 1px solid #eee; }
-    td { padding: 7px 8px 7px 0; border-bottom: 1px solid #f0f0f0; }
-    td:last-child, th:last-child { text-align: right; }
-    tr.total td { font-weight: 600; border-top: 2px solid #eee; border-bottom: none; padding-top: 10px; }
-    .bar-wrap { display: flex; align-items: center; gap: 8px; }
-    .bar { height: 8px; border-radius: 4px; background: #4f8ef7; min-width: 2px; }
-    .amt { font-size: 0.85rem; color: #444; white-space: nowrap; }
-    .summary-box {
-      white-space: pre-wrap;
-      font-size: 0.88rem;
-      line-height: 1.6;
-      color: #333;
-    }
+    thead th:last-child { text-align: right; }
+    tbody td { padding: 10px 12px 10px 0; border-bottom: 1px solid #ffffff07; color: #c9d0e0; vertical-align: middle; }
+    tbody td:last-child { text-align: right; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: #ffffff04; }
+    tfoot td { padding-top: 12px; font-weight: 600; color: #e8eaf0; border-top: 1px solid #ffffff14; font-size: 0.9rem; }
+    tfoot td:last-child { text-align: right; }
+
+    /* ── Bar chart ── */
+    .bar-row { display: flex; align-items: center; gap: 10px; }
+    .bar-track { flex: 1; height: 6px; background: #ffffff0d; border-radius: 3px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #5b7cf6, #7b9cff); }
+    .bar-amt { font-size: 0.82rem; color: #9ca3b0; white-space: nowrap; min-width: 80px; text-align: right; }
+
+    /* ── Category tag ── */
     .tag {
       display: inline-block;
-      font-size: 0.72rem;
-      padding: 2px 7px;
+      padding: 3px 9px;
       border-radius: 99px;
-      background: #eef3ff;
-      color: #4f8ef7;
+      font-size: 0.7rem;
       font-weight: 500;
+      background: #1e2a4a;
+      color: #93b4ff;
+      border: 1px solid #3b5bdb33;
     }
-    .empty { color: #aaa; font-size: 0.9rem; padding: 12px 0; }
-    #pie-wrap { display: none; max-width: 240px; margin: 0 auto; }
-    #bar-wrap table { width: 100%; }
+
+    /* ── Summary ── */
+    .summary-text {
+      white-space: pre-wrap;
+      font-size: 0.875rem;
+      line-height: 1.75;
+      color: #9ca3b0;
+    }
+
+    /* ── Pie ── */
+    #pie-wrap { display: none; max-width: 220px; margin: 0 auto; }
+    #bar-wrap { width: 100%; }
+
+    .empty { color: #4b5563; font-size: 0.875rem; padding: 8px 0; }
   </style>
 </head>
 <body>
 
-<header>
-  <h1>Expense Report</h1>
-  <div class="header-right">
-    {% if generated_at %}
-      <span class="ts">Last updated: {{ generated_at }}</span>
-    {% endif %}
-    <form method="POST" action="/run" id="run-form">
+<nav>
+  <div class="nav-brand">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5b7cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
+    </svg>
+    <span>Expense Report</span>
+  </div>
+  <div class="nav-right">
+    {% if generated_at %}<span class="ts">Updated {{ generated_at }}</span>{% endif %}
+    <form method="POST" action="/run">
       <button type="submit" class="btn btn-primary" id="run-btn" {% if agent_running %}disabled{% endif %}>
-        {% if agent_running %}
-          <span class="spinner"></span>Running…
-        {% else %}
-          Run Report
-        {% endif %}
+        {% if agent_running %}<span class="spinner"></span>Running…{% else %}Run Report{% endif %}
       </button>
     </form>
   </div>
-</header>
+</nav>
+
+<main>
 
 {% if agent_running %}
-<div class="running-banner">
-  <span class="spinner" style="border-color:#4f8ef7; border-top-color:transparent;"></span>
-  Agent is reading your Gmail and categorizing expenses. Page will refresh when done.
+<div class="banner banner-info">
+  <span class="spinner" style="border-color:#93b4ff55; border-top-color:#93b4ff; margin-top:2px;"></span>
+  Reading Gmail and categorizing expenses — page refreshes automatically when done.
 </div>
 {% endif %}
 
 {% if agent_error %}
-<div class="error-banner" id="error-banner">
-  <strong>Agent run failed</strong>
-  <span class="error-detail">{{ agent_error }}</span>
+<div class="banner banner-error" id="error-banner">
+  <div>
+    <strong>Agent run failed</strong>
+    <code>{{ agent_error }}</code>
+  </div>
+</div>
+{% endif %}
+
+<!-- Stat pills -->
+{% if all_entries %}
+{% set top_cat = monthly_totals | dictsort(by='value') | last %}
+<div class="stats">
+  <div class="stat">
+    <div class="stat-label">Month Total</div>
+    <div class="stat-value">{{ currency_symbol }}{{ "{:,.0f}".format(grand_total) }}</div>
+    <div class="stat-sub">{{ month }}</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Entries</div>
+    <div class="stat-value">{{ all_entries | length }}</div>
+    <div class="stat-sub">transactions recorded</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Top Category</div>
+    <div class="stat-value" style="font-size:1.2rem">{{ top_cat[0] }}</div>
+    <div class="stat-sub">{{ currency_symbol }}{{ "{:,.0f}".format(top_cat[1]) }}</div>
+  </div>
 </div>
 {% endif %}
 
 <div class="grid">
 
-  <!-- Monthly totals -->
+  <!-- Category spend -->
   <div class="card">
-    <div class="card-header">
-      <h2>{{ month }} — by category</h2>
-      {% if monthly_totals %}
-        <button class="btn btn-ghost" id="chart-toggle" onclick="toggleChart()">Pie chart</button>
-      {% endif %}
+    <div class="card-head">
+      <span class="card-title">By Category</span>
+      {% if monthly_totals %}<button class="btn btn-ghost" onclick="toggleChart(this)">Pie chart</button>{% endif %}
     </div>
 
     {% if monthly_totals %}
-      <!-- Bar view -->
+      {% set max_val = monthly_totals.values() | max %}
+
       <div id="bar-wrap">
-        {% set max_val = monthly_totals.values() | max %}
         <table>
-          <thead><tr><th>Category</th><th>Spend</th></tr></thead>
           <tbody>
-            {% for cat, amt in monthly_totals.items() %}
+            {% for cat, amt in monthly_totals | dictsort(by='value') | reverse %}
             {% if amt > 0 %}
             <tr>
-              <td>{{ cat }}</td>
+              <td style="width:90px; color:#9ca3b0">{{ cat }}</td>
               <td>
-                <div class="bar-wrap">
-                  <div class="bar" style="width: {{ [(amt / max_val * 120) | int, 2] | max }}px"></div>
-                  <span class="amt">{{ currency_symbol }}{{ "%.2f" | format(amt) }}</span>
+                <div class="bar-row">
+                  <div class="bar-track"><div class="bar-fill" style="width:{{ (amt / max_val * 100) | int }}%"></div></div>
+                  <span class="bar-amt">{{ currency_symbol }}{{ "{:,.0f}".format(amt) }}</span>
                 </div>
               </td>
             </tr>
             {% endif %}
             {% endfor %}
-            <tr class="total">
-              <td>Total</td>
-              <td>{{ currency_symbol }}{{ "%.2f" | format(grand_total) }}</td>
-            </tr>
           </tbody>
+          <tfoot>
+            <tr><td>Total</td><td>{{ currency_symbol }}{{ "{:,.0f}".format(grand_total) }}</td></tr>
+          </tfoot>
         </table>
       </div>
-      <!-- Pie view -->
-      <div id="pie-wrap">
-        <canvas id="pie-chart"></canvas>
-      </div>
+
+      <div id="pie-wrap"><canvas id="pie-chart"></canvas></div>
     {% else %}
       <p class="empty">No expenses recorded yet.</p>
     {% endif %}
   </div>
 
-  <!-- Agent summary -->
+  <!-- Summary -->
   <div class="card">
-    <h2>Agent Summary</h2>
-    <div class="summary-box">{{ summary }}</div>
+    <div class="card-head"><span class="card-title">Agent Summary</span></div>
+    <div class="summary-text">{{ summary }}</div>
   </div>
 
   <!-- All entries -->
-  <div class="card wide">
-    <h2>All Entries — {{ month }}</h2>
+  <div class="card card-wide">
+    <div class="card-head"><span class="card-title">All Entries — {{ month }}</span></div>
     {% if all_entries %}
-      <table>
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Vendor</th>
-            <th>Description</th>
-            <th>Category</th>
-            <th>Amount</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for e in all_entries %}
-          <tr>
-            <td>{{ e.date }}</td>
-            <td>{{ e.vendor }}</td>
-            <td style="color:#666">{{ e.description }}</td>
-            <td><span class="tag">{{ e.category }}</span></td>
-            <td>{{ e.currency }} {{ "%.2f" | format(e.amount) }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Vendor</th>
+          <th>Description</th>
+          <th>Category</th>
+          <th>Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in all_entries %}
+        <tr>
+          <td style="color:#6b7280; white-space:nowrap">{{ e.date }}</td>
+          <td style="font-weight:500; color:#e8eaf0">{{ e.vendor }}</td>
+          <td style="color:#6b7280">{{ e.description }}</td>
+          <td><span class="tag">{{ e.category }}</span></td>
+          <td style="font-weight:500; white-space:nowrap">{{ currency_symbol }}{{ "%.2f" | format(e.amount) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
     {% else %}
-      <p class="empty">No expense entries for this month.</p>
+      <p class="empty">No entries yet.</p>
     {% endif %}
   </div>
 
 </div>
+</main>
 
 <script>
-  // Pie / bar toggle
-  var pieVisible = false;
-  var pieChart = null;
-  var chartData = {
-    labels: [{% for cat, amt in monthly_totals.items() %}{% if amt > 0 %}"{{ cat }}",{% endif %}{% endfor %}],
-    values: [{% for cat, amt in monthly_totals.items() %}{% if amt > 0 %}{{ amt }},{% endif %}{% endfor %}]
-  };
+  // Pass data safely as JSON — avoids Jinja loop rendering bugs
+  var totals = {{ monthly_totals | tojson }};
+  var currencySymbol = {{ currency_symbol | tojson }};
+  var labels = Object.keys(totals).filter(k => totals[k] > 0);
+  var values = labels.map(k => totals[k]);
 
-  function toggleChart() {
+  var pieChart = null;
+  var pieVisible = false;
+  var COLORS = ['#5b7cf6','#f97316','#22d3ee','#a78bfa','#f59e0b','#34d399','#f43f5e','#64748b'];
+
+  function toggleChart(btn) {
     pieVisible = !pieVisible;
     document.getElementById('bar-wrap').style.display = pieVisible ? 'none' : '';
     document.getElementById('pie-wrap').style.display = pieVisible ? 'block' : 'none';
-    document.getElementById('chart-toggle').textContent = pieVisible ? 'Bar chart' : 'Pie chart';
+    btn.textContent = pieVisible ? 'Bar chart' : 'Pie chart';
+
     if (pieVisible && !pieChart) {
       pieChart = new Chart(document.getElementById('pie-chart'), {
         type: 'pie',
         data: {
-          labels: chartData.labels,
+          labels: labels,
           datasets: [{
-            data: chartData.values,
-            backgroundColor: ['#4f8ef7','#f7914f','#4fc3f7','#a78ef7','#f7d44f','#7ef794'],
+            data: values,
+            backgroundColor: COLORS.slice(0, labels.length),
+            borderWidth: 0,
           }]
         },
         options: {
           plugins: {
-            legend: { position: 'bottom', labels: { font: { size: 12 } } },
+            legend: {
+              position: 'bottom',
+              labels: { color: '#9ca3b0', font: { size: 11 }, padding: 12, boxWidth: 10 }
+            },
             tooltip: {
               callbacks: {
-                label: function(ctx) {
-                  return ' {{ currency_symbol }}' + ctx.parsed.toFixed(2);
-                }
+                label: ctx => ' ' + currencySymbol + ctx.parsed.toLocaleString('en-IN', {minimumFractionDigits: 0})
               }
             }
           }
@@ -282,39 +357,33 @@
     }
   }
 
-  // Poll /status every 3s while agent is running
+  // Poll while agent is running
   {% if agent_running %}
   (function poll() {
     setTimeout(function() {
-      fetch('/status')
-        .then(r => r.json())
-        .then(data => {
-          if (!data.running) {
-            if (data.error) {
-              var banner = document.getElementById('error-banner');
-              if (!banner) {
-                banner = document.createElement('div');
-                banner.id = 'error-banner';
-                banner.className = 'error-banner';
-                document.querySelector('header').insertAdjacentElement('afterend', banner);
-              }
-              banner.innerHTML = '<strong>Agent run failed</strong><span class="error-detail">' + data.error + '</span>';
-              document.getElementById('run-btn').disabled = false;
-              document.getElementById('run-btn').textContent = 'Run Report';
-              var running = document.querySelector('.running-banner');
-              if (running) running.remove();
-            } else {
-              window.location.reload();
+      fetch('/status').then(r => r.json()).then(data => {
+        if (!data.running) {
+          if (data.error) {
+            var b = document.getElementById('error-banner');
+            if (!b) {
+              b = document.createElement('div');
+              b.id = 'error-banner';
+              b.className = 'banner banner-error';
+              document.querySelector('main').prepend(b);
             }
+            b.innerHTML = '<div><strong>Agent run failed</strong><code>' + data.error + '</code></div>';
+            document.getElementById('run-btn').disabled = false;
+            document.getElementById('run-btn').innerHTML = 'Run Report';
+            var rb = document.querySelector('.banner-info');
+            if (rb) rb.remove();
           } else {
-            poll();
+            window.location.reload();
           }
-        })
-        .catch(poll);
+        } else { poll(); }
+      }).catch(poll);
     }, 3000);
   })();
   {% endif %}
 </script>
-
 </body>
 </html>
