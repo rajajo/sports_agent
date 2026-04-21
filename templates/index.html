@@ -57,6 +57,18 @@
       align-items: center;
       gap: 8px;
     }
+    .error-banner {
+      max-width: 900px;
+      margin: 0 auto 16px;
+      background: #fff0f0;
+      color: #c0392b;
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 0.88rem;
+      line-height: 1.5;
+    }
+    .error-banner strong { display: block; margin-bottom: 4px; }
+    .error-detail { font-family: monospace; font-size: 0.8rem; word-break: break-word; opacity: .85; }
     .grid {
       max-width: 900px;
       margin: 0 auto;
@@ -123,6 +135,13 @@
 <div class="running-banner">
   <span class="spinner" style="border-color:#4f8ef7; border-top-color:transparent;"></span>
   Agent is reading your Gmail and categorizing expenses. Page will refresh when done.
+</div>
+{% endif %}
+
+{% if agent_error %}
+<div class="error-banner" id="error-banner">
+  <strong>Agent run failed</strong>
+  <span class="error-detail">{{ agent_error }}</span>
 </div>
 {% endif %}
 
@@ -202,7 +221,6 @@
 </div>
 
 <script>
-  // Poll /status every 3s while agent is running; reload when it finishes
   {% if agent_running %}
   (function poll() {
     setTimeout(function() {
@@ -210,7 +228,23 @@
         .then(r => r.json())
         .then(data => {
           if (!data.running) {
-            window.location.reload();
+            if (data.error) {
+              // Show error without losing the existing data on the page
+              var banner = document.getElementById('error-banner');
+              if (!banner) {
+                banner = document.createElement('div');
+                banner.id = 'error-banner';
+                banner.className = 'error-banner';
+                document.querySelector('header').insertAdjacentElement('afterend', banner);
+              }
+              banner.innerHTML = '<strong>Agent run failed</strong><span class="error-detail">' + data.error + '</span>';
+              document.getElementById('run-btn').disabled = false;
+              document.getElementById('run-btn').textContent = 'Run Report';
+              var running = document.querySelector('.running-banner');
+              if (running) running.remove();
+            } else {
+              window.location.reload();
+            }
           } else {
             poll();
           }

@@ -10,8 +10,8 @@ EXPENSE_FILE = os.getenv("EXPENSE_FILE", "expenses.json")
 
 app = Flask(__name__)
 
-# Track whether the agent is currently running
 _agent_running = False
+_agent_error = None
 
 
 def _load_json(path: str) -> dict:
@@ -22,11 +22,13 @@ def _load_json(path: str) -> dict:
 
 
 def _run_agent_background():
-    global _agent_running
+    global _agent_running, _agent_error
+    _agent_error = None
     try:
         from daily_assistant import main
         asyncio.run(main())
     except Exception as e:
+        _agent_error = str(e)
         print(f"Agent run failed: {e}")
     finally:
         _agent_running = False
@@ -63,13 +65,15 @@ def index():
         all_entries=all_entries,
         grand_total=grand_total,
         agent_running=_agent_running,
+        agent_error=_agent_error,
     )
 
 
 @app.route("/run", methods=["POST"])
 def run_report():
-    global _agent_running
+    global _agent_running, _agent_error
     if not _agent_running:
+        _agent_error = None
         _agent_running = True
         thread = threading.Thread(target=_run_agent_background, daemon=True)
         thread.start()
@@ -78,8 +82,7 @@ def run_report():
 
 @app.route("/status")
 def status():
-    """Polled by the UI to know when the agent finishes."""
-    return jsonify({"running": _agent_running})
+    return jsonify({"running": _agent_running, "error": _agent_error})
 
 
 if __name__ == "__main__":
