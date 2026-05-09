@@ -3,7 +3,7 @@
 An intelligent Python agent built with the **Google ADK** (Gemini) and **Pushover API** to deliver automated, real-time sports standings directly to your mobile device.
 
 ### 🚀 Features
-*   **Agentic Search:** Uses the `google_search` tool to dynamically fetch the latest F1 Driver, Constructor, and IPL standings.
+*   **Agentic Search:** Uses the `google_search` tool to dynamically fetch the latest F1 Driver, Constructor, IPL, and NBA standings.
 *   **Smart Summarization:** Powered by **Gemini 2.5 Flash** to clean up raw search data into brief, notification-friendly summaries with emojis.
 *   **Push Notifications:** Instant delivery via **Pushover** to individual devices or delivery groups.
 *   **Secure Config:** Full support for `.env` files to keep API keys and Pushover tokens private.

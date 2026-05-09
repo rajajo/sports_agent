@@ -55,7 +55,8 @@ async def main():
         "Gather the latest standings for:\n"
         "1. F1 Driver Standings\n"
         "2. F1 Constructor Standings\n"
-        "3. IPL (Indian Premier League) Points Table\n\n"
+        "3. IPL (Indian Premier League) Points Table\n"
+        "4. NBA Standings (current season)\n\n"
         "Format the output to be very brief, use emojis, and be push-notification friendly. "
         "Summarize the top 3-5 only for each to keep it short."
     )
@@ -105,5 +106,4 @@ async def main():
         # traceback.print_exc()
 
 if __name__ == "__main__":
-    # Run the async main function
-     asyncio.run(main())
+    asyncio.run(main())
